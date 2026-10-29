@@ -348,7 +348,7 @@ async function check(){
   $("status").textContent = "Checking channels…";
   try{
     const data = await fetchAll();
-    await studioOverlay(data);
+    applyHighWater(data);
     const hist = LS.get("yt_hist", {});
     const results = [];
     let firstRun = true;
@@ -428,7 +428,7 @@ async function openVideo(id){
   let f = null;
   try{ f = (await api("/videos", {part: "snippet,statistics,contentDetails,status", id})).items[0]; }catch(e){}
   const st = f?.statistics || {};
-  const views = Number(st.viewCount ?? v.views);
+  const views = Math.max(Number(st.viewCount ?? 0), v.views);
   const likes = st.likeCount != null ? Number(st.likeCount) : null;
   const comments = st.commentCount != null ? Number(st.commentCount) : null;
   const days = Math.max(1, (Date.now() - new Date(v.published)) / 864e5);
@@ -538,7 +538,22 @@ async function studioOverlay(out){
   }
 }
 
+/* views never go down: keep the highest value ever seen (public and Studio numbers can differ) */
+function applyHighWater(out){
+  const hw = LS.get("yt_hw", {}), vh = LS.get("yt_vh", {}), bv = SESSION_BASE?.v || {}, bc = SESSION_BASE?.c || {};
+  for (const c of out){
+    const ck = "c" + c.id;
+    hw[ck] = c.views = Math.max(c.views, hw[ck] || 0, bc[c.id]?.[1] || 0);
+    for (const v of c.recent){
+      const last = vh[v.id]?.length ? vh[v.id][vh[v.id].length - 1][1] : 0;
+      hw[v.id] = v.views = Math.max(v.views, hw[v.id] || 0, bv[v.id]?.[0] || 0, last);
+    }
+  }
+  LS.set("yt_hw", hw);
+}
+
 /* ---------- heads-up, charts ---------- */
+if (LS.get("yt_ver", 0) < 2){ try{ ["yt_hist", "yt_vh", "yt_visit", "yt_hw"].forEach(k => localStorage.removeItem(k)); }catch(e){} LS.set("yt_ver", 2); }
 let SESSION_BASE = LS.get("yt_visit", null);
 const svgT = (x, y, a, s) => `<text x="${x}" y="${y}" fill="var(--muted)" font-size="11" text-anchor="${a}">${s}</text>`;
 const snapState = rs => ({t: Date.now(),
@@ -574,7 +589,7 @@ function renderDigest(results){
     const bc = base.c[cur.id];
     if (bc){ if (cur.subs != null && bc[0] != null) ts += cur.subs - bc[0]; nv += Math.max(0, cur.videos - bc[2]); }
     for (const v of cur.recent){
-      const b = base.v[v.id], dv = v.views - (b ? b[0] : 0), dl = (v.likes || 0) - (b ? b[1] : 0), dc = (v.comments || 0) - (b ? b[2] : 0);
+      const b = base.v[v.id], dv = Math.max(0, v.views - (b ? b[0] : 0)), dl = (v.likes || 0) - (b ? b[1] : 0), dc = (v.comments || 0) - (b ? b[2] : 0);
       tv += dv; tl += dl; tc += dc;
       if (dv || dl || dc) rows.push({v, ch: cur.title, dv, dl, dc, pct: b && b[0] ? dv / b[0] * 100 : null});
     }
@@ -618,7 +633,7 @@ async function loadStudio(){
   let h = "";
   if (rs[0].status === "fulfilled"){
     const t = cols(rs[0].value);
-    h += `<div class="tiles">${tile(((t.estimatedMinutesWatched || 0) / 60).toFixed(1) + " h", "Watch time")}${tile(mmss(t.averageViewDuration || 0), "Average view duration")}${tile((t.averageViewPercentage || 0).toFixed(1) + "%", "Average % viewed")}${tile(fmt((t.subscribersGained || 0) - (t.subscribersLost || 0)), "Subscribers gained (net)")}${tile(fmt(t.shares || 0), "Shares")}</div>`;
+    h += `<div class="tiles">${tile(fmt(t.views || 0), "Views in Studio")}${tile(((t.estimatedMinutesWatched || 0) / 60).toFixed(1) + " h", "Watch time")}${tile(mmss(t.averageViewDuration || 0), "Average view duration")}${tile((t.averageViewPercentage || 0).toFixed(1) + "%", "Average % viewed")}${tile(fmt((t.subscribersGained || 0) - (t.subscribersLost || 0)), "Subscribers gained (net)")}${tile(fmt(t.shares || 0), "Shares")}</div>`;
   }
   const ret = ok(1);
   if (ret) h += sec("Audience retention", ret.length > 2 ? retChart(ret) : `<p class="sub">Not enough viewers yet for a retention curve.</p>`, true);
