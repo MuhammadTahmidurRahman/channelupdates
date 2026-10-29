@@ -1,0 +1,650 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Channel Pulse</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@400;600;800&family=Source+Serif+4:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#eef1f4; --surface:#ffffff; --ink:#14202e; --muted:#5d6b7a; --line:#d8dee5;
+  --up:#0f7b6c; --down:#c0392b; --flat:#8a96a3; --accent:#1f3a5f;
+  --display:"Bricolage Grotesque","Segoe UI",system-ui,sans-serif;
+  --body:"Source Serif 4",Georgia,serif;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --bg:#10161d; --surface:#18212b; --ink:#e8edf2; --muted:#93a1b0; --line:#2a3541;
+    --up:#3cc4ae; --down:#ff7a6b; --flat:#7a8896; --accent:#8fb4e8;
+  }
+}
+*{box-sizing:border-box}
+html{height:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--body);font-size:17px;line-height:1.55;
+  padding:max(24px,env(safe-area-inset-top)) 20px max(40px,env(safe-area-inset-bottom))}
+.wrap{max-width:1100px;margin:0 auto}
+header{display:flex;flex-wrap:wrap;gap:16px;align-items:flex-end;justify-content:space-between;margin-bottom:24px}
+h1{font-family:var(--display);font-weight:800;font-size:clamp(34px,6vw,56px);line-height:1;margin:0;letter-spacing:-.02em}
+.sub{color:var(--muted);margin:8px 0 0}
+.controls{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+button,select,input{font:inherit;font-family:var(--display);font-size:15px;color:var(--ink)}
+button,select{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:9px 14px;cursor:pointer}
+button.primary{background:var(--accent);color:var(--bg);border-color:var(--accent);font-weight:600}
+button:focus-visible,select:focus-visible,input:focus-visible,a:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.status{font-family:var(--display);font-size:14px;color:var(--muted);margin-bottom:18px}
+.digest{background:var(--accent);color:var(--bg);border-radius:14px;padding:22px 26px;margin-bottom:28px}
+.digest h2{font-family:var(--display);font-size:15px;font-weight:600;margin:0 0 8px;opacity:.8}
+.digest p{margin:0;font-size:20px;line-height:1.45}
+.digest ul{margin:8px 0 0;padding-left:20px}
+.setup{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:24px;margin-bottom:28px}
+.setup h2{font-family:var(--display);margin:0 0 6px}
+.setup input{width:100%;padding:11px 12px;border:1px solid var(--line);border-radius:8px;background:var(--bg);margin:10px 0}
+.setup ol{padding-left:20px;color:var(--muted)}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(310px,1fr));gap:20px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:22px;min-width:0}
+.card.changed{border-color:var(--up);box-shadow:0 0 0 2px color-mix(in srgb,var(--up) 25%,transparent)}
+.ch-head{display:flex;gap:14px;align-items:center;margin-bottom:16px}
+.ch-head img{width:52px;height:52px;border-radius:50%;background:var(--line)}
+.ch-head h3{font-family:var(--display);margin:0;font-size:21px;line-height:1.2;overflow-wrap:anywhere}
+.ch-head a{color:var(--muted);font-size:14px;text-decoration:none;font-family:var(--display)}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px}
+.stat .n{font-family:var(--display);font-weight:800;font-size:26px;line-height:1.1}
+.stat .l{font-family:var(--display);font-size:13px;color:var(--muted)}
+.d{font-family:var(--display);font-size:13px;font-weight:600}
+.up{color:var(--up)} .down{color:var(--down)} .flat{color:var(--flat)}
+.meta{border-top:1px solid var(--line);padding-top:12px;font-family:var(--display);font-size:14px;color:var(--muted);display:grid;gap:4px}
+.meta b{color:var(--ink);font-weight:600}
+.videos{list-style:none;margin:14px 0 0;padding:0;display:grid;gap:10px}
+.videos li{display:flex;gap:10px;align-items:center}
+.videos img{width:72px;height:40px;object-fit:cover;border-radius:4px;background:var(--line);flex:none}
+.videos a{color:var(--ink);text-decoration:none;font-family:var(--display);font-size:14px;line-height:1.3;
+  display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.videos .v{font-family:var(--display);font-size:12px;color:var(--muted)}
+.new-tag{font-family:var(--display);font-size:11px;font-weight:700;background:var(--up);color:var(--bg);border-radius:4px;padding:1px 6px;margin-right:6px}
+.err{color:var(--down);font-family:var(--display)}
+@media (max-width:420px){.stats{grid-template-columns:1fr 1fr}}
+.vbtn{all:unset;box-sizing:border-box;display:flex;gap:10px;align-items:center;width:100%;cursor:pointer;border-radius:8px;padding:4px}
+.vbtn:hover{background:var(--bg)} .vbtn:focus-visible{outline:2px solid var(--accent)}
+.vbtn .t{font-family:var(--display);font-size:14px;line-height:1.3;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.vbtn .v{display:block;font-family:var(--display);font-size:12px;color:var(--muted)}
+.more{margin-top:10px;font-size:13px;padding:6px 12px}
+dialog{border:1px solid var(--line);border-radius:16px;background:var(--surface);color:var(--ink);padding:0;width:min(860px,calc(100vw - 24px));max-height:calc(100vh - 24px)}
+dialog::backdrop{background:rgba(10,16,24,.65)}
+.m-body{padding:22px 24px 28px}
+.m-head{display:flex;gap:16px;align-items:flex-start;margin-bottom:18px}
+.m-head img{width:160px;border-radius:8px;flex:none}
+.m-head h2{font-family:var(--display);font-size:22px;line-height:1.2;margin:0}
+.m-head .sub{margin:6px 0}
+.m-head>button{margin-left:auto;flex:none}
+.m-body a{color:var(--accent)}
+.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin:12px 0}
+.tile{border:1px solid var(--line);border-radius:10px;padding:12px}
+.tile .n{font-family:var(--display);font-weight:800;font-size:24px;line-height:1.1}
+.tile .l{font-family:var(--display);font-size:12px;color:var(--muted)}
+.m-body h3,.m-body h4{font-family:var(--display);margin:22px 0 6px}
+.chart{width:100%;height:auto}
+.bar{display:grid;grid-template-columns:150px 1fr 40px;gap:8px;align-items:center;font-family:var(--display);font-size:13px;margin:4px 0}
+.bar i{display:block;height:8px;border-radius:4px;background:var(--accent)}
+.bar b{text-align:right}
+.m-body input{width:100%;padding:10px 12px;border:1px solid var(--line);border-radius:8px;background:var(--bg);margin:8px 0}
+@media (max-width:560px){.m-head{flex-wrap:wrap}.m-head img{width:100%}}
+.digest button.link{all:unset;cursor:pointer;text-decoration:underline;font-weight:600}
+.digest button.link:focus-visible{outline:2px solid currentColor;outline-offset:2px}
+.digest h2 button.link{font-weight:400;font-size:13px;margin-left:12px}
+.digest .tot{display:flex;flex-wrap:wrap;gap:6px 22px;font-family:var(--display);font-size:20px;font-weight:600;margin:6px 0 12px}
+.digest .boom{background:rgba(255,255,255,.18);border-radius:10px;padding:10px 14px;margin:0 0 12px;font-size:17px}
+.digest li{margin:4px 0;font-size:16px}
+.spark{margin:0 0 14px}.spark .l{font-family:var(--display);font-size:12px;color:var(--muted)}
+.meta summary{cursor:pointer;font-weight:600;color:var(--ink)}
+.metabody{display:grid;gap:4px;margin-top:8px}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.sec{border-top:1px solid var(--line);padding:10px 0}
+.sec>summary{font-family:var(--display);font-weight:600;cursor:pointer}
+@media (max-width:560px){.two{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div>
+      <h1>Channel Pulse</h1>
+      <p class="sub">Your channels, one screen. Changes since the last check are highlighted.</p>
+    </div>
+    <div class="controls">
+      <label class="sub" for="interval" style="margin:0">Check every</label>
+      <select id="interval">
+        <option value="60">1 minute</option>
+        <option value="300">5 minutes</option>
+        <option value="900">15 minutes</option>
+        <option value="1800">30 minutes</option>
+      </select>
+      <button id="refresh" class="primary">Check now</button>
+      <button id="notif">Enable alerts</button>
+    </div>
+  </header>
+
+  <div class="status" id="status" role="status" aria-live="polite"></div>
+  <div id="setup"></div>
+  <div id="digest"></div>
+  <div class="grid" id="grid"></div>
+</div>
+
+<dialog id="modal" aria-labelledby="mtitle"><div class="m-body" id="mbody"></div></dialog>
+<script src="https://accounts.google.com/gsi/client" async defer></script>
+<script>
+/* ====== EDIT HERE: your channels (handles without the @) ====== */
+const HANDLES = ["promethix1", "VOIDMELODIES-o4x", "stickybutstory"];
+/* ============================================================== */
+
+const DEFAULT_KEY = "AIzaSyCEklcgTJxDElNgj-F0WsXI8N5dMOyQmXU";
+const API = "https://www.googleapis.com/youtube/v3";
+const LS = {
+  get(k, d){ try{ const v = localStorage.getItem(k); return v ? JSON.parse(v) : d; }catch(e){ return d; } },
+  set(k, v){ try{ localStorage.setItem(k, JSON.stringify(v)); }catch(e){} }
+};
+const $ = id => document.getElementById(id);
+let timer = null, countdownTimer = null, nextAt = 0, busy = false;
+
+const fmt = n => n == null ? "Hidden" : Number(n).toLocaleString("en-US");
+const short = n => {
+  if (n == null) return "Hidden";
+  n = Number(n);
+  if (n >= 1e6) return (n/1e6).toFixed(2).replace(/\.?0+$/,"") + "M";
+  if (n >= 1e4) return (n/1e3).toFixed(1).replace(/\.0$/,"") + "K";
+  return n.toLocaleString("en-US");
+};
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const ago = ts => {
+  const m = Math.round((Date.now() - ts) / 60000);
+  if (m < 1) return "just now";
+  if (m < 60) return m + " min ago";
+  const h = Math.round(m / 60);
+  if (h < 48) return h + " h ago";
+  return Math.round(h / 24) + " days ago";
+};
+function delta(n, label){
+  if (n == null || isNaN(n)) return `<span class="d flat">–</span>`;
+  if (n === 0) return `<span class="d flat">no change${label ? " " + label : ""}</span>`;
+  const cls = n > 0 ? "up" : "down";
+  return `<span class="d ${cls}">${n > 0 ? "▲ +" : "▼ "}${fmt(n)}${label ? " " + label : ""}</span>`;
+}
+
+async function api(path, params){
+  const key = LS.get("yt_key", "") || DEFAULT_KEY;
+  const url = new URL(API + path);
+  Object.entries({...params, key}).forEach(([k,v]) => url.searchParams.set(k, v));
+  const r = await fetch(url.toString());
+  const j = await r.json();
+  if (!r.ok) throw new Error(j.error?.message || ("HTTP " + r.status));
+  return j;
+}
+
+async function resolveIds(){
+  const cache = LS.get("yt_ids", {});
+  for (const h of HANDLES){
+    if (cache[h]) continue;
+    const j = await api("/channels", { part: "id", forHandle: "@" + h });
+    if (!j.items?.length) throw new Error("Channel not found: @" + h);
+    cache[h] = j.items[0].id;
+  }
+  LS.set("yt_ids", cache);
+  return HANDLES.map(h => cache[h]);
+}
+
+async function fetchAll(){
+  const ids = await resolveIds();
+  const ch = await api("/channels", { part: "snippet,statistics,contentDetails", id: ids.join(",") });
+  const byId = Object.fromEntries(ch.items.map(i => [i.id, i]));
+  const out = [];
+  for (const id of ids){
+    const c = byId[id];
+    if (!c) continue;
+    const uploads = c.contentDetails.relatedPlaylists.uploads;
+    let vids = [];
+    try{
+      const pl = await api("/playlistItems", { part: "snippet,contentDetails", playlistId: uploads, maxResults: 15 });
+      const vidIds = pl.items.map(i => i.contentDetails.videoId).join(",");
+      if (vidIds){
+        const vs = await api("/videos", { part: "snippet,statistics", id: vidIds });
+        vids = vs.items.map(v => ({
+          id: v.id, title: v.snippet.title, published: v.snippet.publishedAt,
+          thumb: v.snippet.thumbnails?.default?.url || "",
+          views: Number(v.statistics.viewCount || 0),
+          likes: v.statistics.likeCount != null ? Number(v.statistics.likeCount) : null,
+          comments: v.statistics.commentCount != null ? Number(v.statistics.commentCount) : null
+        })).sort((a,b) => new Date(b.published) - new Date(a.published));
+      }
+    }catch(e){ /* uploads list can fail for empty channels */ }
+    const s = c.statistics;
+    out.push({
+      id, handle: c.snippet.customUrl || "", title: c.snippet.title,
+      avatar: c.snippet.thumbnails?.default?.url || "",
+      subs: s.hiddenSubscriberCount ? null : Number(s.subscriberCount),
+      views: Number(s.viewCount), videos: Number(s.videoCount), recent: vids
+    });
+  }
+  return out;
+}
+
+/* history: { channelId: [ {t, subs, views, videos, ids:[...]} ] } */
+function pickBaseline(hist, ageMs){
+  const target = Date.now() - ageMs;
+  let best = null;
+  for (const h of hist){ if (h.t <= target) best = h; }
+  return best;
+}
+function dayDelta(hist, cur, ageMs, field){
+  const b = pickBaseline(hist, ageMs);
+  if (!b || b[field] == null || cur[field] == null) return null;
+  return cur[field] - b[field];
+}
+
+function analyse(cur, hist){
+  const prev = hist.length ? hist[hist.length - 1] : null;
+  const prevIds = new Set(prev?.ids || []);
+  const newVids = prev ? cur.recent.filter(v => !prevIds.has(v.id)) : [];
+  const d = {
+    subs: prev && prev.subs != null && cur.subs != null ? cur.subs - prev.subs : null,
+    views: prev ? cur.views - prev.views : null,
+    videos: prev ? cur.videos - prev.videos : null,
+    subs24: dayDelta(hist, cur, 864e5, "subs"),
+    views24: dayDelta(hist, cur, 864e5, "views"),
+    subs7: dayDelta(hist, cur, 6048e5, "subs"),
+    views7: dayDelta(hist, cur, 6048e5, "views"),
+    sinceT: prev ? prev.t : null,
+    newVids
+  };
+  d.prevVV = prev?.vv || {};
+  d.changed = !!(prev && (d.subs || d.views || d.videos || newVids.length));
+  const now = Date.now();
+  const last30 = cur.recent.filter(v => now - new Date(v.published) < 30 * 864e5);
+  d.uploads30 = last30.length;
+  const rv = cur.recent.slice(0, 10);
+  d.avgViews = rv.length ? Math.round(rv.reduce((a,v) => a + v.views, 0) / rv.length) : null;
+  d.top = [...rv].sort((a,b) => b.views - a.views)[0] || null;
+  d.lastUpload = cur.recent[0]?.published || null;
+  return d;
+}
+
+function render(results){
+  LAST = results;
+  results.forEach(({cur, d}) => { CHANNELS[cur.id] = {cur, d}; cur.recent.forEach(v => VIDEOS[v.id] = {...v, channelId: cur.id}); });
+  const grid = $("grid");
+  grid.innerHTML = results.map(({cur, d}) => {
+    const url = cur.handle ? `https://www.youtube.com/${cur.handle}` : `https://www.youtube.com/channel/${cur.id}`;
+    const newIds = new Set(d.newVids.map(v => v.id));
+    return `<article class="card ${d.changed ? "changed" : ""}">
+      <div class="ch-head">
+        <img src="${esc(cur.avatar)}" alt="" width="52" height="52">
+        <div><h3>${esc(cur.title)}</h3><a href="${esc(url)}" target="_blank" rel="noopener">${esc(cur.handle || "Open channel")}</a>${cur.studio ? ' <span class="new-tag" style="background:var(--accent)">Studio numbers</span>' : ""}</div>
+      </div>
+      <div class="stats">
+        <div class="stat"><div class="n">${short(cur.subs)}</div><div class="l">Subscribers</div>${delta(d.subs)}</div>
+        <div class="stat"><div class="n">${short(cur.views)}</div><div class="l">Total views</div>${delta(d.views)}</div>
+        <div class="stat"><div class="n">${fmt(cur.videos)}</div><div class="l">Videos</div>${delta(d.videos)}</div>
+      </div>
+      ${sparkHtml(cur)}
+      <details class="meta"><summary>More stats</summary><div class="metabody">
+        <div>Last 24 h: <b>${d.subs24 == null ? "collecting data" : (d.subs24 >= 0 ? "+" : "") + fmt(d.subs24) + " subs, " + (d.views24 >= 0 ? "+" : "") + fmt(d.views24) + " views"}</b></div>
+        <div>Last 7 days: <b>${d.subs7 == null ? "collecting data" : (d.subs7 >= 0 ? "+" : "") + fmt(d.subs7) + " subs, " + (d.views7 >= 0 ? "+" : "") + fmt(d.views7) + " views"}</b></div>
+        <div>Uploads in last 30 days: <b>${d.uploads30}</b>${d.lastUpload ? " · last upload " + ago(new Date(d.lastUpload).getTime()) : ""}</div>
+        <div>Average views, last ${Math.min(10, cur.recent.length)} videos: <b>${d.avgViews == null ? "–" : fmt(d.avgViews)}</b></div>
+        ${d.top ? `<div>Top recent: <b>${esc(d.top.title.length > 46 ? d.top.title.slice(0,46) + "…" : d.top.title)}</b> (${short(d.top.views)})</div>` : ""}
+      </div></details>
+      <ul class="videos">
+        ${(expanded.has(cur.id) ? cur.recent : cur.recent.slice(0, 4)).map(v => `<li><button class="vbtn" data-vid="${esc(v.id)}">
+          <img src="${esc(v.thumb)}" alt="" loading="lazy">
+          <span><span class="t">${newIds.has(v.id) ? '<span class="new-tag">NEW</span>' : ""}${esc(v.title)}</span>
+          <span class="v">${vline(v)}</span></span>
+        </button></li>`).join("")}
+      </ul>
+      ${cur.recent.length > 4 ? `<button class="more" data-more="${cur.id}">${expanded.has(cur.id) ? "Show fewer" : "Show all " + cur.recent.length}</button>` : ""}
+    </article>`;
+  }).join("");
+}
+
+function notify(results){
+  if (!("Notification" in window) || Notification.permission !== "granted") return;
+  const bits = results.filter(r => r.d.changed).map(({cur, d}) => {
+    const p = [];
+    if (d.newVids.length) p.push(d.newVids.length + " new video");
+    if (d.subs) p.push((d.subs > 0 ? "+" : "") + d.subs + " subs");
+    if (d.views) p.push((d.views > 0 ? "+" : "") + fmt(d.views) + " views");
+    return cur.title + ": " + p.join(", ");
+  });
+  if (bits.length){
+    try{ new Notification("Channel Pulse", { body: bits.join("\n") }); }catch(e){}
+  }
+}
+
+function showSetup(msg){
+  $("setup").innerHTML = `<section class="setup">
+    <h2>Add your YouTube API key</h2>
+    <p>${msg ? `<span class="err">${esc(msg)}</span>` : "The page needs a free YouTube Data API v3 key to read public channel numbers."}</p>
+    <ol>
+      <li>Open Google Cloud Console and create a project.</li>
+      <li>Enable “YouTube Data API v3”.</li>
+      <li>Create an API key under Credentials and restrict it to your site address.</li>
+    </ol>
+    <input id="keyInput" type="password" placeholder="Paste API key" autocomplete="off" aria-label="YouTube API key">
+    <button class="primary" id="saveKey">Save key and check</button>
+  </section>`;
+  $("saveKey").onclick = () => {
+    const v = $("keyInput").value.trim();
+    if (!v) return;
+    LS.set("yt_key", v);
+    $("setup").innerHTML = "";
+    check();
+  };
+}
+
+async function check(){
+  if (busy) return;
+  if (!LS.get("yt_key", "") && !DEFAULT_KEY){ showSetup(); $("status").textContent = "Waiting for API key."; return; }
+  busy = true;
+  $("refresh").disabled = true;
+  $("status").textContent = "Checking channels…";
+  try{
+    const data = await fetchAll();
+    await studioOverlay(data);
+    const hist = LS.get("yt_hist", {});
+    const results = [];
+    let firstRun = true;
+    for (const cur of data){
+      const h = hist[cur.id] || [];
+      if (h.length) firstRun = false;
+      results.push({ cur, d: analyse(cur, h) });
+    }
+    render(results);
+    renderDigest(results);
+    if (!firstRun) notify(results);
+    /* save snapshot; keep ~30 days, thinning to one per 10 min */
+    const cutoff = Date.now() - 30 * 864e5;
+    for (const {cur} of results){
+      let h = (hist[cur.id] || []).filter(x => x.t > cutoff);
+      const snap = { t: Date.now(), subs: cur.subs, views: cur.views, videos: cur.videos, ids: cur.recent.map(v => v.id), vv: Object.fromEntries(cur.recent.map(v => [v.id, v.views])) };
+      if (h.length > 1 && snap.t - h[h.length - 1].t < 18e5) h[h.length - 1] = {...snap, t: h[h.length - 1].t}; else h.push(snap);
+      if (h.length > 1){ delete h[h.length - 2].ids; delete h[h.length - 2].vv; }
+      hist[cur.id] = h;
+    }
+    LS.set("yt_hist", hist);
+    const vh = LS.get("yt_vh", {}), nowT = Date.now(), vcut = nowT - 14 * 864e5;
+    for (const {cur} of results) for (const v of cur.recent){
+      const a = (vh[v.id] || []).filter(p => p[0] > vcut), pt = [nowT, v.views, v.likes || 0, v.comments || 0];
+      if (a.length > 1 && nowT - a[a.length - 1][0] < 18e5) a[a.length - 1] = [a[a.length - 1][0], pt[1], pt[2], pt[3]]; else a.push(pt);
+      vh[v.id] = a;
+    }
+    LS.set("yt_vh", vh);
+    if (document.visibilityState === "visible") LS.set("yt_visit", snapState(results));
+    $("setup").innerHTML = "";
+    $("status").textContent = "Last checked " + new Date().toLocaleTimeString() + ".";
+  }catch(e){
+    const bad = /API key|keyInvalid|referer|forbidden|quota/i.test(e.message);
+    const blocked = /failed to fetch|networkerror|load failed/i.test(e.message);
+    $("status").innerHTML = `<span class="err">${blocked
+      ? "The browser could not reach YouTube. Open this page from your hosted site address (not a preview), and turn off ad blockers or VPN for it."
+      : esc(e.message)}</span>`;
+    if (bad) showSetup(e.message);
+  }finally{
+    busy = false;
+    $("refresh").disabled = false;
+    schedule();
+  }
+}
+
+function schedule(){
+  clearTimeout(timer); clearInterval(countdownTimer);
+  const secs = Number($("interval").value);
+  nextAt = Date.now() + secs * 1000;
+  timer = setTimeout(check, secs * 1000);
+  countdownTimer = setInterval(() => {
+    const s = Math.max(0, Math.round((nextAt - Date.now()) / 1000));
+    const el = $("status");
+    if (!el.querySelector(".err") && !busy){
+      const base = el.textContent.replace(/ Next check in.*$/, "");
+      el.textContent = base + " Next check in " + (s >= 60 ? Math.floor(s/60) + " min " + (s%60) + " s" : s + " s") + ".";
+    }
+  }, 1000);
+}
+
+/* ---------- video detail + Studio data ---------- */
+let LAST = [], CURV = null;
+const VIDEOS = {}, CHANNELS = {}, expanded = new Set();
+const OAUTH_CLIENT_ID = ""; // optional: paste your OAuth client ID here, or enter it in the page
+const SCOPES = "https://www.googleapis.com/auth/yt-analytics.readonly https://www.googleapis.com/auth/youtube.readonly";
+const clientId = () => (LS.get("yt_client", "") || OAUTH_CLIENT_ID).trim();
+const mmss = s => { s = Math.round(s); return Math.floor(s/60) + ":" + String(s%60).padStart(2, "0"); };
+const isoSecs = iso => { const m = /PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?/.exec(iso || ""); return m ? (+m[1]||0)*3600 + (+m[2]||0)*60 + (+m[3]||0) : 0; };
+const tile = (n, l, sub) => `<div class="tile"><div class="n">${n}</div><div class="l">${l}</div>${sub || ""}</div>`;
+const tokenFor = id => { const t = LS.get("yt_tokens", {})[id]; return t && t.exp > Date.now() + 3e4 ? t.token : null; };
+
+async function openVideo(id){
+  const v = VIDEOS[id], ch = CHANNELS[v.channelId]; CURV = v;
+  const dlg = $("modal");
+  $("mbody").innerHTML = `<p class="status">Loading…</p>`;
+  if (!dlg.open) dlg.showModal();
+  let f = null;
+  try{ f = (await api("/videos", {part: "snippet,statistics,contentDetails,status", id})).items[0]; }catch(e){}
+  const st = f?.statistics || {};
+  const views = Number(st.viewCount ?? v.views);
+  const likes = st.likeCount != null ? Number(st.likeCount) : null;
+  const comments = st.commentCount != null ? Number(st.commentCount) : null;
+  const days = Math.max(1, (Date.now() - new Date(v.published)) / 864e5);
+  const eng = views ? ((likes || 0) + (comments || 0)) / views * 100 : 0;
+  const prev = ch.d.prevVV[id], avg = ch.d.avgViews;
+  const desc = f?.snippet?.description || "";
+  const hv = LS.get("yt_vh", {})[id] || [], pv = hv.map(p => [p[0], p[1]]), pe = hv.map(p => [p[0], p[2] + p[3]]);
+  pv.push([Date.now(), views]); pe.push([Date.now(), (likes || 0) + (comments || 0)]);
+  $("mbody").innerHTML = `<div class="m-head">
+    <img src="https://i.ytimg.com/vi/${esc(id)}/mqdefault.jpg" alt="">
+    <div><h2 id="mtitle">${esc(v.title)}</h2>
+      <p class="sub">${esc(ch.cur.title)} · published ${new Date(v.published).toLocaleDateString()}${f ? " · " + mmss(isoSecs(f.contentDetails.duration)) + " long · " + esc(f.status.privacyStatus) + " · " + f.contentDetails.definition.toUpperCase() + " · captions " + (f.contentDetails.caption === "true" ? "on" : "off") : ""}</p>
+      <p><a href="https://www.youtube.com/watch?v=${esc(id)}" target="_blank" rel="noopener">Watch on YouTube</a> · <a href="https://studio.youtube.com/video/${esc(id)}/analytics" target="_blank" rel="noopener">Open in Studio</a></p></div>
+    <button data-close aria-label="Close">Close</button></div>
+    <div class="tiles">
+      ${tile(fmt(views), "Views", prev != null ? delta(views - prev, "since last check") : "")}
+      ${tile(likes == null ? "Hidden" : fmt(likes), "Likes")}
+      ${tile(comments == null ? "Off" : fmt(comments), "Comments")}
+      ${tile(eng.toFixed(2) + "%", "Engagement (likes + comments ÷ views)")}
+      ${tile(fmt(Math.round(views / days)), "Views per day")}
+      ${avg ? tile((views / avg).toFixed(1) + "×", "Vs. recent average") : ""}
+    </div>
+    <div class="two"><div><h4>Views over time (tracked here)</h4>${lineChart(pv)}</div><div><h4>Likes + comments over time</h4>${lineChart(pe)}</div></div>
+    ${f?.snippet?.tags?.length ? `<p class="sub">Tags: ${f.snippet.tags.slice(0, 15).map(esc).join(", ")}</p>` : ""}
+    <h3>Studio data</h3><div id="studio"></div>
+    ${desc ? `<details style="margin-top:22px"><summary>Description</summary><p>${esc(desc).replace(/\n/g, "<br>")}</p></details>` : ""}`;
+  loadStudio();
+}
+
+async function aapi(tok, p){
+  const u = new URL("https://youtubeanalytics.googleapis.com/v2/reports");
+  Object.entries({ids: "channel==MINE", ...p}).forEach(([k, x]) => u.searchParams.set(k, x));
+  const r = await fetch(u.toString(), {headers: {Authorization: "Bearer " + tok}});
+  const j = await r.json();
+  if (!r.ok){ const e = new Error(j.error?.message || ("HTTP " + r.status)); e.status = r.status; throw e; }
+  return j;
+}
+const cols = j => { const o = {}; (j.rows?.[0] || []).forEach((x, i) => o[j.columnHeaders[i].name] = x); return o; };
+
+function connectHtml(){
+  const t = esc(CHANNELS[CURV.channelId].cur.title);
+  if (!clientId()) return `<p>Retention, watch time and traffic sources are private. Google shares them only with the channel owner, so you sign in once. Paste an OAuth client ID:</p>
+    <input id="cid" placeholder="123456-abc.apps.googleusercontent.com" aria-label="OAuth client ID">
+    <button class="primary" data-connect>Save and sign in</button>
+    <ol class="sub"><li>In Google Cloud, enable “YouTube Analytics API”.</li><li>OAuth consent screen: choose External and add your Google account as a test user.</li><li>Credentials → Create OAuth client ID → Web application. Add your site address (for example https://yourname.github.io) under Authorized JavaScript origins.</li></ol><p id="smsg" class="err"></p>`;
+  return `<p>Sign in to see private data for ${t}. Pick this channel in Google's account list.</p><button class="primary" data-connect>Sign in for ${t}</button><p id="smsg" class="err"></p>`;
+}
+
+function connect(){
+  const inp = $("cid"); if (inp && inp.value.trim()) LS.set("yt_client", inp.value.trim());
+  const say = m => { const e = $("smsg"); if (e) e.textContent = m; };
+  if (!clientId()) return say("Paste your OAuth client ID first.");
+  if (!window.google?.accounts?.oauth2) return say("Google sign-in did not load. Turn off ad blockers and reload.");
+  const want = CHANNELS[CURV.channelId].cur.title;
+  google.accounts.oauth2.initTokenClient({
+    client_id: clientId(), scope: SCOPES,
+    error_callback: e => say("Sign-in was cancelled or blocked (" + (e.type || "error") + ")."),
+    callback: async r => {
+      if (r.error) return say(r.error);
+      try{
+        const j = await (await fetch("https://www.googleapis.com/youtube/v3/channels?part=id&mine=true", {headers: {Authorization: "Bearer " + r.access_token}})).json();
+        const cid = j.items?.[0]?.id;
+        if (!cid || !CHANNELS[cid]) return say("That account's channel is not one of your three. Sign in again and pick " + want + ".");
+        const all = LS.get("yt_tokens", {}); all[cid] = {token: r.access_token, exp: Date.now() + r.expires_in * 1000}; LS.set("yt_tokens", all);
+        if (cid !== CURV.channelId) return say("You signed in to " + CHANNELS[cid].cur.title + ". Sign in again and pick " + want + ".");
+        loadStudio();
+      }catch(e){ say(e.message); }
+    }
+  }).requestAccessToken({prompt: "select_account"});
+}
+
+function retChart(rows){
+  const ymax = Math.max(1, ...rows.map(r => r[1])), X = r => 30 + r * 540, Y = v => 150 - v / ymax * 130;
+  const pts = rows.map(r => X(r[0]).toFixed(1) + "," + Y(r[1]).toFixed(1)).join(" ");
+  const rel = rows.reduce((a, r) => a + (r[2] || 0), 0) / rows.length;
+  const tx = (x, y, a, s) => `<text x="${x}" y="${y}" fill="var(--muted)" font-size="11" text-anchor="${a}">${s}</text>`;
+  return `<svg class="chart" viewBox="0 0 600 180" role="img" aria-label="Audience retention curve"><line x1="30" y1="150" x2="570" y2="150" stroke="var(--line)"/><line x1="30" y1="20" x2="30" y2="150" stroke="var(--line)"/><polyline points="${pts}" fill="none" stroke="var(--accent)" stroke-width="2.5"/>${tx(30,168,"start","Start")}${tx(300,168,"middle","Middle")}${tx(570,168,"end","End")}${tx(26,24,"end",Math.round(ymax*100)+"%")}${tx(26,150,"end","0%")}</svg>
+    <p class="sub">Share of viewers still watching at each point. YouTube's relative retention score for similar-length videos: ${Math.round(rel * 100)} / 100.</p>`;
+}
+
+document.addEventListener("click", e => {
+  const t = e.target;
+  if (t.closest("[data-seen]")){ SESSION_BASE = snapState(LAST); LS.set("yt_visit", SESSION_BASE); renderDigest(LAST); render(LAST); return; }
+  const vb = t.closest("[data-vid]"); if (vb) return openVideo(vb.dataset.vid);
+  const mb = t.closest("[data-more]");
+  if (mb){ const k = mb.dataset.more; expanded.has(k) ? expanded.delete(k) : expanded.add(k); return render(LAST); }
+  if (t.closest("[data-connect]")) return connect();
+  if (t.closest("[data-close]") || t === $("modal")) $("modal").close();
+});
+
+/* ---------- Studio numbers override public API (owner sign-in) ---------- */
+const pacificToday = () => new Date().toLocaleDateString("en-CA", {timeZone: "America/Los_Angeles"});
+async function studioOverlay(out){
+  for (const c of out){
+    const tok = tokenFor(c.id); if (!tok) continue;
+    try{
+      const base = {startDate: "2018-01-01", endDate: pacificToday()};
+      const [tv, tc] = await Promise.all([
+        aapi(tok, {...base, dimensions: "video", metrics: "views,likes,comments", sort: "-views", maxResults: 200}),
+        aapi(tok, {...base, metrics: "views"})
+      ]);
+      const m = Object.fromEntries((tv.rows || []).map(r => [r[0], r]));
+      c.recent.forEach(v => { const r = m[v.id]; if (r){ v.views = Math.max(v.views, r[1]); v.likes = Math.max(v.likes || 0, r[2]); v.comments = Math.max(v.comments || 0, r[3]); } });
+      if (tc.rows?.[0]) c.views = Math.max(c.views, tc.rows[0][0]);
+      c.studio = true;
+    }catch(e){ /* keep public numbers */ }
+  }
+}
+
+/* ---------- heads-up, charts ---------- */
+let SESSION_BASE = LS.get("yt_visit", null);
+const svgT = (x, y, a, s) => `<text x="${x}" y="${y}" fill="var(--muted)" font-size="11" text-anchor="${a}">${s}</text>`;
+const snapState = rs => ({t: Date.now(),
+  c: Object.fromEntries(rs.map(({cur}) => [cur.id, [cur.subs, cur.views, cur.videos]])),
+  v: Object.fromEntries(rs.flatMap(({cur}) => cur.recent.map(v => [v.id, [v.views, v.likes || 0, v.comments || 0]])))});
+const vline = v => { const b = SESSION_BASE?.v?.[v.id], g = b ? v.views - b[0] : 0;
+  return `${short(v.views)} views · ${short(v.likes || 0)} likes · ${short(v.comments || 0)} comments · ${ago(new Date(v.published).getTime())}${g > 0 ? ` · <b class="up">+${fmt(g)}</b>` : ""}`; };
+
+function lineChart(pts, h = 120){
+  if (pts.length < 2) return `<p class="sub">Chart appears after a few checks.</p>`;
+  const xs = pts.map(p => p[0]), ys = pts.map(p => p[1]);
+  const x0 = Math.min(...xs), x1 = Math.max(...xs), y0 = Math.min(...ys), y1 = Math.max(...ys), xr = (x1 - x0) || 1, yr = (y1 - y0) || 1;
+  const X = x => 44 + (x - x0) / xr * 546, Y = y => h - 24 - (y - y0) / yr * (h - 44);
+  const d = pts.map((p, i) => (i ? "L" : "M") + X(p[0]).toFixed(1) + "," + Y(p[1]).toFixed(1)).join("");
+  const lab = x => new Date(x).toLocaleString(undefined, x1 - x0 > 1728e5 ? {month: "short", day: "numeric"} : {hour: "numeric", minute: "2-digit"});
+  return `<svg class="chart" viewBox="0 0 600 ${h}" role="img" aria-label="Trend chart"><path d="${d}" fill="none" stroke="var(--accent)" stroke-width="2.5" stroke-linejoin="round"/>${svgT(40,14,"end",short(y1))}${svgT(40,h-24,"end",short(y0))}${svgT(44,h-6,"start",lab(x0))}${svgT(590,h-6,"end",lab(x1))}</svg>`;
+}
+function barChart(vals, labs, f = fmt){
+  const h = 120, m = Math.max(1, ...vals), bw = 546 / vals.length;
+  const bars = vals.map((v, i) => { const bh = v / m * (h - 36); return `<rect x="${(44 + i * bw + 1).toFixed(1)}" y="${(h - 24 - bh).toFixed(1)}" width="${Math.max(1, bw - 2).toFixed(1)}" height="${bh.toFixed(1)}" rx="2" fill="var(--accent)"><title>${esc(labs[i])}: ${f(v)}</title></rect>`; }).join("");
+  return `<svg class="chart" viewBox="0 0 600 ${h}" role="img" aria-label="Bar chart">${bars}${svgT(40,16,"end",short(m))}${svgT(40,h-24,"end","0")}${svgT(44,h-6,"start",labs[0])}${svgT(590,h-6,"end",labs[labs.length-1])}</svg>`;
+}
+function sparkHtml(cur){
+  const pts = (LS.get("yt_hist", {})[cur.id] || []).map(x => [x.t, x.views]); pts.push([Date.now(), cur.views]);
+  return `<div class="spark"><div class="l">Total views, tracked</div>${lineChart(pts, 90)}</div>`;
+}
+
+function renderDigest(results){
+  const base = SESSION_BASE, box = $("digest");
+  if (!base){ box.innerHTML = `<div class="digest"><h2>First visit saved</h2><p>This is your starting point. Next time you open the page, this box lists what changed since then.</p></div>`; return; }
+  let tv = 0, tl = 0, tc = 0, ts = 0, nv = 0; const rows = [];
+  for (const {cur} of results){
+    const bc = base.c[cur.id];
+    if (bc){ if (cur.subs != null && bc[0] != null) ts += cur.subs - bc[0]; nv += Math.max(0, cur.videos - bc[2]); }
+    for (const v of cur.recent){
+      const b = base.v[v.id], dv = v.views - (b ? b[0] : 0), dl = (v.likes || 0) - (b ? b[1] : 0), dc = (v.comments || 0) - (b ? b[2] : 0);
+      tv += dv; tl += dl; tc += dc;
+      if (dv || dl || dc) rows.push({v, ch: cur.title, dv, dl, dc, pct: b && b[0] ? dv / b[0] * 100 : null});
+    }
+  }
+  rows.sort((a, b) => b.dv - a.dv || (b.dl + b.dc) - (a.dl + a.dc));
+  const sg = n => (n > 0 ? "+" : "") + fmt(n);
+  const tot = [[tv, "views"], [tl, "likes"], [tc, "comments"], [ts, "subscribers"], [nv, "new videos"]].filter(x => x[0]).map(x => `<span>${sg(x[0])} ${x[1]}</span>`).join("");
+  const boom = rows[0] && rows[0].dv > 0 ? rows[0] : null;
+  const li = r => `<li><button class="link" data-vid="${esc(r.v.id)}">${esc(r.v.title)}</button> <small>(${esc(r.ch)})</small>: ${[r.dv && sg(r.dv) + " views", r.dl && sg(r.dl) + " likes", r.dc && sg(r.dc) + " comments"].filter(Boolean).join(", ")}</li>`;
+  box.innerHTML = `<div class="digest"><h2>Since your last visit, ${ago(base.t)}<button class="link" data-seen>Mark as seen</button></h2>
+    ${tot ? `<div class="tot">${tot}</div>` : `<p>No changes yet.</p>`}
+    ${boom ? `<div class="boom">Likely booming: <button class="link" data-vid="${esc(boom.v.id)}">${esc(boom.v.title)}</button> (${esc(boom.ch)}) gained ${sg(boom.dv)} views${boom.pct != null ? ", up " + boom.pct.toFixed(0) + "%" : ", brand new"}</div>` : ""}
+    ${rows.length ? `<ul>${rows.slice(0, 6).map(li).join("")}</ul>` : ""}</div>`;
+}
+
+const pretty = s => String(s).replace(/_/g, " ").toLowerCase();
+const regionName = c => { try{ return new Intl.DisplayNames(undefined, {type: "region"}).of(c); }catch(e){ return c; } };
+const barList = (rows, lab, tot) => rows.length ? rows.map(r => { const p = r[1] / tot * 100; return `<div class="bar"><span>${esc(lab(r))}</span><i style="width:${p.toFixed(1)}%"></i><b>${p.toFixed(0)}%</b></div>`; }).join("") : `<p class="sub">No data yet.</p>`;
+const sec = (title, body, open) => `<details class="sec"${open ? " open" : ""}><summary>${title}</summary>${body}</details>`;
+
+async function loadStudio(){
+  const v = CURV, box = $("studio"), tok = tokenFor(v.channelId);
+  if (!tok){ box.innerHTML = connectHtml(); return; }
+  box.innerHTML = `<p class="status">Loading Studio data…</p>`;
+  const today = pacificToday(), pub = v.published.slice(0, 10), d28 = new Date(Date.now() - 28 * 864e5).toISOString().slice(0, 10);
+  const b = {startDate: pub, endDate: today, filters: "video==" + v.id}, q = x => aapi(tok, {...b, ...x});
+  const rs = await Promise.allSettled([
+    q({metrics: "views,estimatedMinutesWatched,averageViewDuration,averageViewPercentage,shares,subscribersGained,subscribersLost"}),
+    q({dimensions: "elapsedVideoTimeRatio", metrics: "audienceWatchRatio,relativeRetentionPerformance"}),
+    q({dimensions: "insightTrafficSourceType", metrics: "views", sort: "-views"}),
+    q({startDate: pub > d28 ? pub : d28, dimensions: "day", metrics: "views,estimatedMinutesWatched", sort: "day"}),
+    q({dimensions: "country", metrics: "views", sort: "-views", maxResults: 6}),
+    q({dimensions: "deviceType", metrics: "views", sort: "-views"}),
+    q({dimensions: "ageGroup,gender", metrics: "viewerPercentage", sort: "-viewerPercentage", maxResults: 6})
+  ]);
+  if (rs.every(r => r.status === "rejected")){
+    const e = rs[0].reason;
+    box.innerHTML = `<p class="err">${esc(e.message)}</p>` + (e.status === 401 ? connectHtml() : ""); return;
+  }
+  const ok = i => rs[i].status === "fulfilled" ? (rs[i].value.rows || []) : null;
+  let h = "";
+  if (rs[0].status === "fulfilled"){
+    const t = cols(rs[0].value);
+    h += `<div class="tiles">${tile(((t.estimatedMinutesWatched || 0) / 60).toFixed(1) + " h", "Watch time")}${tile(mmss(t.averageViewDuration || 0), "Average view duration")}${tile((t.averageViewPercentage || 0).toFixed(1) + "%", "Average % viewed")}${tile(fmt((t.subscribersGained || 0) - (t.subscribersLost || 0)), "Subscribers gained (net)")}${tile(fmt(t.shares || 0), "Shares")}</div>`;
+  }
+  const ret = ok(1);
+  if (ret) h += sec("Audience retention", ret.length > 2 ? retChart(ret) : `<p class="sub">Not enough viewers yet for a retention curve.</p>`, true);
+  const day = ok(3);
+  if (day) h += sec("Last 28 days, day by day", day.length > 1 ? `<div class="two"><div><h4>Views</h4>${barChart(day.map(r => r[1]), day.map(r => r[0]))}</div><div><h4>Watch time (hours)</h4>${barChart(day.map(r => r[2] / 60), day.map(r => r[0]), n => n.toFixed(1))}</div></div>` : `<p class="sub">Not enough days of data yet.</p>`, true);
+  const tr = ok(2);
+  if (tr) h += sec("Where views come from", barList(tr, r => pretty(r[0]), tr.reduce((a, r) => a + r[1], 0) || 1), true);
+  const co = ok(4), dv = ok(5), ag = ok(6);
+  let aud = "";
+  if (co) aud += `<h4>Top countries</h4>` + barList(co, r => regionName(r[0]), co.reduce((a, r) => a + r[1], 0) || 1);
+  if (dv) aud += `<h4>Devices</h4>` + barList(dv, r => pretty(r[0]), dv.reduce((a, r) => a + r[1], 0) || 1);
+  if (ag) aud += `<h4>Age and gender (share of viewers)</h4>` + barList(ag.map(r => [pretty(r[1]) + " " + r[0].replace("age", ""), r[2]]), r => r[0], 100);
+  if (aud) h += sec("Audience", aud, false);
+  box.innerHTML = h + `<p class="sub">Studio data can trail by a day or two.</p>`;
+}
+
+$("refresh").onclick = check;
+$("interval").value = LS.get("yt_interval", "60");
+$("interval").onchange = () => { LS.set("yt_interval", $("interval").value); schedule(); };
+$("notif").onclick = async () => {
+  if (!("Notification" in window)){ $("status").textContent = "This browser does not support alerts."; return; }
+  const p = await Notification.requestPermission();
+  $("notif").textContent = p === "granted" ? "Alerts on" : "Alerts blocked";
+};
+if ("Notification" in window && Notification.permission === "granted") $("notif").textContent = "Alerts on";
+check();
+</script>
+</body>
+</html>
