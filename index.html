@@ -6,7 +6,7 @@
 <title>Channel Pulse</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@400;600;800&family=Source+Serif+4:wght@400;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@400;600;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
 :root{
   --bg:#eef1f4; --surface:#ffffff; --ink:#14202e; --muted:#5d6b7a; --line:#d8dee5;
@@ -114,6 +114,35 @@ ul.tl{list-style:none;padding:0;display:grid;gap:12px}
 ul.tl a{color:var(--ink);font-family:var(--display);font-weight:600;text-decoration:none}
 ul.tl .v{font-family:var(--display);font-size:13px;color:var(--muted)}
 @media (max-width:700px){.trendctl{grid-template-columns:1fr 1fr}.trendctl input{grid-column:1/-1}}
+/* ---- product polish ---- */
+:root{--bg:#f3f4fb;--surface:#fff;--ink:#14162e;--muted:#646b88;--line:#e4e7f3;--accent:#5b4bff;--accent2:#9b5cff;--up:#0f9d74;--down:#e5484d;--body:"Inter",system-ui,-apple-system,"Segoe UI",sans-serif;--shadow:0 1px 2px rgba(20,22,60,.05),0 10px 28px rgba(20,22,60,.07)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0d0f1e;--surface:#161930;--ink:#eceefb;--muted:#9aa1c4;--line:#262a4a;--accent:#7b6cff;--accent2:#b07cff;--up:#3ad6a8;--down:#ff7b80;--shadow:0 1px 2px rgba(0,0,0,.3),0 10px 28px rgba(0,0,0,.35)}}
+body{font-size:16px;background:radial-gradient(900px 420px at 8% -8%,color-mix(in srgb,var(--accent) 16%,transparent),transparent),radial-gradient(700px 380px at 100% 0,color-mix(in srgb,var(--accent2) 12%,transparent),transparent),var(--bg)}
+header{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;padding:14px 0;margin-bottom:18px;background:color-mix(in srgb,var(--bg) 80%,transparent);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px)}
+h1{background:linear-gradient(90deg,var(--ink) 30%,var(--accent));-webkit-background-clip:text;background-clip:text;color:transparent;letter-spacing:-.03em}
+.card,.setup,.digest{border-radius:18px;box-shadow:var(--shadow)}
+.card{transition:transform .15s,box-shadow .15s}
+.card:hover{transform:translateY(-2px)}
+.card.changed{border-color:var(--up)}
+button,select{border-radius:10px;transition:filter .15s,transform .05s}
+button:hover{filter:brightness(1.06)} button:active{transform:scale(.98)}
+button.primary,.chip.act{background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;border:0}
+.digest{background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;padding:24px 28px}
+.digest h2{font-size:16px;opacity:1}
+.status{display:inline-block;background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:5px 14px}
+.stat .n,.tile .n{letter-spacing:-.02em}
+.tile{background:color-mix(in srgb,var(--accent) 5%,var(--surface));border-radius:12px}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0}
+.chip{font-family:var(--display);font-size:12px;font-weight:600;border:1px solid var(--line);border-radius:999px;padding:4px 11px;background:var(--bg);color:var(--ink);cursor:pointer}
+.tv{display:grid;grid-template-columns:128px 1fr;gap:14px;padding:14px;border:1px solid var(--line);border-radius:14px;background:var(--surface)}
+.tv img{width:128px;border-radius:10px;display:block}
+.tv h5{font-family:var(--display);font-size:15px;margin:0 0 4px;line-height:1.3}
+.tv h5 a{color:var(--ink);text-decoration:none}
+.tv .v{font-family:var(--display);font-size:13px;color:var(--muted)}
+.rank{display:inline-block;background:var(--accent);color:#fff;border-radius:6px;padding:0 7px;margin-right:6px;font-size:12px}
+.hot{background:var(--up);color:#fff;border-radius:6px;padding:0 7px;margin-left:6px;font-size:11px}
+footer{margin-top:40px;text-align:center;color:var(--muted);font-family:var(--display);font-size:13px}
+@media (max-width:560px){.tv{grid-template-columns:1fr}.tv img{width:100%}}
 </style>
 </head>
 <body>
@@ -121,7 +150,7 @@ ul.tl .v{font-family:var(--display);font-size:13px;color:var(--muted)}
   <header>
     <div>
       <h1>Channel Pulse</h1>
-      <p class="sub">Your channels, one screen. It only checks when you press Check now.</p>
+      <p class="sub">Your channels, one screen. Spot what just moved, then copy what is working in your niche.</p>
     </div>
     <div class="controls">
       <button id="refresh" class="primary">Check now</button>
@@ -133,6 +162,7 @@ ul.tl .v{font-family:var(--display);font-size:13px;color:var(--muted)}
   <div id="digest"></div>
   <details class="trend card" id="trend"><summary>Trend research: what is working in your niche</summary><div id="trendbody"></div></details>
   <div class="grid" id="grid"></div>
+  <footer>Channel Pulse reads public YouTube data. Counts can lag behind Studio. Checks run only when you press Check now.</footer>
 </div>
 
 <dialog id="modal" aria-labelledby="mtitle"><div class="m-body" id="mbody"></div></dialog>
@@ -142,7 +172,15 @@ ul.tl .v{font-family:var(--display);font-size:13px;color:var(--muted)}
 const HANDLES = ["promethix1", "VOIDMELODIES-o4x", "stickybutstory", "weirdhustlewins", "lumen_leaf"];
 /* ============================================================== */
 
-const DEFAULT_KEY = "AIzaSyCEklcgTJxDElNgj-F0WsXI8N5dMOyQmXU";
+const API_KEYS = [
+  "AIzaSyC0SWZQsr_iNuzipIuDT2rQlI5AciN9xNs",
+  "AIzaSyCEklcgTJxDElNgj-F0WsXI8N5dMOyQmXU",
+  "AIzaSyBRVkzyumj1WpmacyZmHMOOLfuf_rtXC1w",
+  "AIzaSyDCW2NyEFfbcAAuGdGtBgBwUO0AiY3zeFM",
+  "AIzaSyBa785Mk3dLLFbTMItZdrBqlNZolEhxv3k"
+];
+const DEFAULT_KEY = API_KEYS[0] || "";
+const ROTATE = /quotaExceeded|dailyLimitExceeded|rateLimitExceeded|keyInvalid|keyExpired|accessNotConfigured|ipRefererBlocked|API key/i;
 const API = "https://www.googleapis.com/youtube/v3";
 const LS = {
   get(k, d){ try{ const v = localStorage.getItem(k); return v ? JSON.parse(v) : d; }catch(e){ return d; } },
@@ -176,13 +214,21 @@ function delta(n, label){
 }
 
 async function api(path, params){
-  const key = LS.get("yt_key", "") || DEFAULT_KEY;
-  const url = new URL(API + path);
-  Object.entries({...params, key}).forEach(([k,v]) => url.searchParams.set(k, v));
-  const r = await fetch(url.toString());
-  const j = await r.json();
-  if (!r.ok) throw new Error(j.error?.message || ("HTTP " + r.status));
-  return j;
+  const keys = [LS.get("yt_key", ""), ...API_KEYS].filter((k, i, arr) => k && arr.indexOf(k) === i);
+  const day = pacificToday(), dead = LS.get("yt_dead", {}), bad = new Set(dead.d === day ? dead.i : []);
+  let lastErr = "";
+  for (let i = 0; i < keys.length; i++){
+    if (bad.has(keys[i].slice(-8))) continue;
+    const url = new URL(API + path);
+    Object.entries({...params, key: keys[i]}).forEach(([k, v]) => url.searchParams.set(k, v));
+    const r = await fetch(url.toString()), j = await r.json();
+    if (r.ok){ LS.set("yt_kuse", {n: i + 1, of: keys.length}); return j; }
+    const msg = (j.error?.errors?.[0]?.reason || "") + " " + (j.error?.message || "");
+    if (!ROTATE.test(msg)) throw new Error(j.error?.message || ("HTTP " + r.status));
+    bad.add(keys[i].slice(-8)); lastErr = msg.trim();
+    LS.set("yt_dead", {d: day, i: [...bad]});
+  }
+  throw new Error("All API keys are out of quota or blocked for today. Quota resets at midnight Pacific time. Last error: " + lastErr);
 }
 
 async function resolveIds(){
@@ -385,7 +431,7 @@ async function check(){
     LS.set("yt_vh", vh);
     if (document.visibilityState === "visible") LS.set("yt_visit", snapState(results));
     $("setup").innerHTML = "";
-    $("status").textContent = "Last checked " + new Date().toLocaleTimeString() + ".";
+    $("status").textContent = "Last checked " + new Date().toLocaleTimeString() + "." + (LS.get("yt_kuse", null) ? " Key " + LS.get("yt_kuse").n + " of " + LS.get("yt_kuse").of + " in use." : "");
   }catch(e){
     const bad = /API key|keyInvalid|referer|forbidden|quota/i.test(e.message);
     const blocked = /failed to fetch|networkerror|load failed/i.test(e.message);
@@ -507,7 +553,7 @@ document.addEventListener("click", e => {
   const t = e.target;
   if (t.closest("[data-seen]")){ SESSION_BASE = snapState(LAST); LS.set("yt_visit", SESSION_BASE); renderDigest(LAST); render(LAST); return; }
   if (t.closest("[data-trend]")) return runTrend();
-  const ct = t.closest("[data-copytags]"); if (ct){ navigator.clipboard?.writeText(ct.dataset.copytags); ct.textContent = "Copied"; return; }
+  const cp = t.closest("[data-copy]"); if (cp){ copyText(cp.dataset.copy); const o = cp.textContent; cp.textContent = "Copied"; setTimeout(() => cp.textContent = o, 1200); return; }
   const vb = t.closest("[data-vid]"); if (vb) return openVideo(vb.dataset.vid);
   const mb = t.closest("[data-more]");
   if (mb){ const k = mb.dataset.more; expanded.has(k) ? expanded.delete(k) : expanded.add(k); return render(LAST); }
@@ -656,51 +702,69 @@ function initTrend(){
   $("trendbody").innerHTML = `<p class="sub">Finds the fastest-growing recent videos on a topic, then shows their tags, title habits and timing. Each run uses about 102 of your 10,000 daily quota units.</p>
     <div class="trendctl"><select id="tch" aria-label="Channel">${HANDLES.map(h => `<option value="${esc(h)}">${esc(h)}</option>`).join("")}</select>
     <input id="tkw" placeholder="Type topic keywords" aria-label="Topic keywords" value="${esc(kw(HANDLES[0]))}">
-    <select id="tdays" aria-label="Time window"><option value="7">Last 7 days</option><option value="30">Last 30 days</option></select>
+    <select id="tdays" aria-label="Time window"><option value="1">Last 24 hours</option><option value="3">Last 3 days</option><option value="7" selected>Last 7 days</option><option value="30">Last 30 days</option></select>
     <select id="tfmt" aria-label="Format"><option value="any">Any length</option><option value="short">Short videos only</option></select>
     <button class="primary" data-trend>Analyze</button></div><div id="trendout"></div>`;
   $("tch").onchange = () => { $("tkw").value = kw($("tch").value); };
 }
+const STOP = new Set("the and for you your with this that from are was how why what when who not but can all out has have will just more than into about they them their then its his her she him our own get got one two new best top here there these those been being does did doing make made".split(" "));
+const med = a => { const s = [...a].sort((x, y) => x - y); return s.length ? s[Math.floor(s.length / 2)] : 0; };
+async function copyText(t){ try{ await navigator.clipboard.writeText(t); }catch(e){ const a = document.createElement("textarea"); a.value = t; document.body.appendChild(a); a.select(); try{ document.execCommand("copy"); }catch(_){} a.remove(); } }
+const cbtn = (label, text) => text ? `<button class="chip act" data-copy="${esc(text)}">${label}</button>` : "";
+const tally = arr => { const c = {}; arr.forEach(x => c[x] = (c[x] || 0) + 1); return Object.entries(c).sort((a, b) => b[1] - a[1]); };
+
 async function runTrend(){
   const out = $("trendout"), h = $("tch").value, kw = $("tkw").value.trim(), days = Number($("tdays").value);
   if (!kw) return;
   LS.set("yt_kw_" + h, kw);
-  out.innerHTML = `<p class="status">Searching…</p>`;
+  out.innerHTML = `<p class="status">Searching YouTube…</p>`;
   try{
-    const sp = {part: "snippet", type: "video", q: kw, order: "viewCount", publishedAfter: new Date(Date.now() - days * 864e5).toISOString(), maxResults: 30, relevanceLanguage: "en"};
+    const sp = {part: "snippet", type: "video", q: kw, order: "viewCount", publishedAfter: new Date(Date.now() - days * 864e5).toISOString(), maxResults: 50, relevanceLanguage: "en"};
     if ($("tfmt").value === "short") sp.videoDuration = "short";
     const ids = (await api("/search", sp)).items.map(i => i.id.videoId).filter(Boolean);
     if (!ids.length){ out.innerHTML = `<p class="sub">No videos found. Try other keywords or a longer window.</p>`; return; }
-    const vs = (await api("/videos", {part: "snippet,statistics,contentDetails", id: ids.join(",")})).items;
+    const mine = new Set(Object.keys(CHANNELS));
+    const vs = (await api("/videos", {part: "snippet,statistics,contentDetails", id: ids.join(",")})).items.filter(v => !mine.has(v.snippet.channelId));
     const cs = (await api("/channels", {part: "statistics", id: [...new Set(vs.map(v => v.snippet.channelId))].join(",")})).items;
     const subs = Object.fromEntries(cs.map(c => [c.id, c.statistics.hiddenSubscriberCount ? null : Number(c.statistics.subscriberCount)]));
     const L = vs.map(v => {
-      const st = v.statistics, views = Number(st.viewCount || 0), age = Math.max(1, (Date.now() - new Date(v.snippet.publishedAt)) / 36e5), sb = subs[v.snippet.channelId];
-      return {id: v.id, title: v.snippet.title, ch: v.snippet.channelTitle, tags: v.snippet.tags || [], views, vph: views / age, lr: views ? Number(st.likeCount || 0) / views * 100 : 0, cr: views ? Number(st.commentCount || 0) / views * 100 : 0,
-        secs: isoSecs(v.contentDetails.duration), subs: sb, ratio: sb ? views / sb : null, hour: new Date(v.snippet.publishedAt).getHours()};
+      const st = v.statistics, views = Number(st.viewCount || 0), age = Math.max(3, (Date.now() - new Date(v.snippet.publishedAt)) / 36e5), sb = subs[v.snippet.channelId];
+      const txt = v.snippet.title + " " + (v.snippet.description || "");
+      return {id: v.id, title: v.snippet.title, ch: v.snippet.channelTitle, tags: v.snippet.tags || [], ht: [...txt.matchAll(/#[\p{L}\p{N}_]+/gu)].map(m => m[0].toLowerCase()),
+        views, vph: views / age, lr: views ? Number(st.likeCount || 0) / views * 100 : 0, cr: views ? Number(st.commentCount || 0) / views * 100 : 0,
+        secs: isoSecs(v.contentDetails.duration), subs: sb, ratio: sb != null ? views / Math.max(sb, 100) : null, hour: new Date(v.snippet.publishedAt).getHours()};
     }).sort((a, b) => b.vph - a.vph);
-    const n = L.length, pct = f => Math.round(L.filter(f).length / n * 100), avg = k => L.reduce((a, x) => a + x[k], 0) / n;
-    const tc = {}; L.forEach(x => new Set(x.tags.map(t => t.toLowerCase().trim())).forEach(t => { if (t) tc[t] = (tc[t] || 0) + 1; }));
-    const tags = Object.entries(tc).sort((a, b) => b[1] - a[1]).slice(0, 15);
-    const secs = L.map(x => x.secs).sort((a, b) => a - b), hc = {}; L.forEach(x => hc[x.hour] = (hc[x.hour] || 0) + 1);
-    const hrs = Object.entries(hc).sort((a, b) => b[1] - a[1]).slice(0, 3).map(e => new Date(2000, 0, 1, +e[0]).toLocaleTimeString([], {hour: "numeric"}));
-    const known = L.filter(x => x.ratio != null), top = L.slice(0, 10);
+    const n = L.length;
+    if (n < 5){ out.innerHTML = `<p class="sub">Only ${n} competitor videos found. Try broader keywords or a longer window.</p>`; return; }
+    const W = L.slice(0, Math.max(5, Math.ceil(n * 0.3)));
+    const share = (a, f) => a.length ? Math.round(a.filter(f).length / a.length * 100) : 0, vsA = f => `${share(W, f)}% of winners vs ${share(L, f)}% of all`;
+    const avg = (a, k) => a.reduce((s, x) => s + x[k], 0) / a.length;
+    const hrs = tally(W.map(x => x.hour)).slice(0, 3).map(e => new Date(2000, 0, 1, +e[0]).toLocaleTimeString([], {hour: "numeric"}));
+    const tags = tally(W.flatMap(x => [...new Set(x.tags.map(t => t.toLowerCase().trim()))].filter(Boolean))).slice(0, 15);
+    const hts = tally(W.flatMap(x => [...new Set(x.ht)])).slice(0, 10);
+    const words = tally(W.flatMap(x => [...new Set(x.title.toLowerCase().replace(/#[\p{L}\p{N}_]+/gu, "").match(/[\p{L}']{3,}/gu) || [])].filter(w => !STOP.has(w)))).filter(e => e[1] > 1).slice(0, 12);
+    const known = W.filter(x => x.ratio != null);
     const tk = [
-      `${pct(x => x.secs <= 180)}% of these videos are 3 minutes or shorter. Median length: ${mmss(secs[Math.floor(n / 2)])}.`,
-      known.length ? `${known.filter(x => x.ratio >= 5).length} of ${known.length} have views at least 5× the channel's subscribers. That means YouTube is showing them beyond the creator's own audience.` : "",
-      known.length ? `${top.filter(x => x.subs != null && x.subs < 1000).length} of the top 10 come from channels under 1,000 subscribers, so small channels can win here.` : "",
-      `Titles: ${pct(x => /\d/.test(x.title))}% contain a number, ${pct(x => x.title.includes("?"))}% ask a question, ${pct(x => x.title.includes("#"))}% use hashtags. Average length ${Math.round(L.reduce((a, x) => a + x.title.length, 0) / n)} characters.`,
-      `Average like rate ${avg("lr").toFixed(1)}% and comment rate ${avg("cr").toFixed(2)}% of views.`,
-      `Most common publish hours (your local time): ${hrs.join(", ")}.`,
-      `${pct(x => x.tags.length > 0)}% of the videos have tags, so tags are only one signal.`
+      `Length: winners are ${mmss(med(W.map(x => x.secs)))} long at the median, and ${vsA(x => x.secs <= 180)} are 3 minutes or shorter.`,
+      known.length ? `Reach: ${known.filter(x => x.ratio >= 5).length} of ${known.length} winners have views at least 5× their channel's subscribers, and ${share(W, x => x.subs != null && x.subs < 1000)}% come from channels under 1,000 subscribers.` : "",
+      `Titles: numbers in ${vsA(x => /\d/.test(x.title))}; questions in ${vsA(x => x.title.includes("?"))}; hashtags in ${vsA(x => x.title.includes("#"))}. Winners' average title length is ${Math.round(W.reduce((s, x) => s + x.title.length, 0) / W.length)} characters.`,
+      `Engagement: winners average ${avg(W, "lr").toFixed(1)}% likes and ${avg(W, "cr").toFixed(2)}% comments (all videos: ${avg(L, "lr").toFixed(1)}% and ${avg(L, "cr").toFixed(2)}%).`,
+      `Timing: winners were most often published around ${hrs.join(", ")} (your local time).`,
+      `Tags: ${share(W, x => x.tags.length > 0)}% of winners use tags at all, so treat tags as a minor signal next to the title and thumbnail.`
     ].filter(Boolean);
-    out.innerHTML = `<h4>What is working (${n} videos, last ${days} days, ranked by views per hour)</h4><ul>${tk.map(x => `<li>${esc(x)}</li>`).join("")}</ul>
-      <p class="sub">These are patterns in what is getting views now, not YouTube's secret rules.</p>
-      <h4>Top tags <button class="more" data-copytags="${esc(tags.map(t => t[0]).join(", "))}">Copy tags</button></h4>${tags.length ? barList(tags, r => r[0], n) : `<p class="sub">These videos use no tags.</p>`}
-      <h4>Views per hour, top 10</h4>${barChart(top.map(x => Math.round(x.vph)), top.map((x, i) => "#" + (i + 1) + " " + x.title.slice(0, 28)))}
-      <h4>Top videos</h4><ul class="tl">${top.map((x, i) => `<li><a href="https://www.youtube.com/watch?v=${esc(x.id)}" target="_blank" rel="noopener">${i + 1}. ${esc(x.title)}</a>
-        <div class="v">${esc(x.ch)}${x.subs != null ? " (" + short(x.subs) + " subs)" : ""} · ${short(x.views)} views · ${x.vph.toFixed(1)}/hr · ${x.lr.toFixed(1)}% likes · ${mmss(x.secs)}${x.ratio != null ? " · " + x.ratio.toFixed(1) + "× subs" : ""}</div>
-        ${x.tags.length ? `<div class="v">Tags: ${x.tags.slice(0, 6).map(esc).join(", ")}</div>` : ""}</li>`).join("")}</ul>`;
+    const top = L.slice(0, 12);
+    const card = (x, i) => `<div class="tv"><img src="https://i.ytimg.com/vi/${esc(x.id)}/mqdefault.jpg" alt="" loading="lazy"><div>
+      <h5><span class="rank">${i + 1}</span><a href="https://www.youtube.com/watch?v=${esc(x.id)}" target="_blank" rel="noopener">${esc(x.title)}</a>${x.ratio != null && x.ratio >= 5 ? '<span class="hot">Breakout</span>' : ""}</h5>
+      <div class="v">${esc(x.ch)}${x.subs != null ? " · " + short(x.subs) + " subs" : ""} · ${short(x.views)} views · ${Math.round(x.vph)}/hr · ${x.lr.toFixed(1)}% likes · ${mmss(x.secs)}${x.ratio != null ? " · " + x.ratio.toFixed(1) + "× subs" : ""}</div>
+      <div class="chips">${x.tags.slice(0, 15).map(t => `<button class="chip" data-copy="${esc(t)}" title="Copy tag">${esc(t)}</button>`).join("")}</div>
+      <div class="chips">${cbtn("Copy tags", x.tags.join(", "))}${cbtn("Copy title", x.title)}${cbtn("Copy link", "https://www.youtube.com/watch?v=" + x.id)}${cbtn("Copy all", x.title + "\nhttps://www.youtube.com/watch?v=" + x.id + (x.tags.length ? "\nTags: " + x.tags.join(", ") : ""))}</div></div></div>`;
+    out.innerHTML = `<p class="sub">Sample: ${n} competitor videos from the last ${days} day${days > 1 ? "s" : ""} (your own channels excluded). Winners are the top ${W.length} by views per hour. ${n < 20 ? "Small sample, so treat these as hints." : ""}</p>
+      <h4>What the winners have in common</h4><ul>${tk.map(x => `<li>${esc(x)}</li>`).join("")}</ul><p class="sub">These are patterns in what is getting views now, not YouTube's actual ranking rules.</p>
+      <h4>Tags winners use ${cbtn("Copy all tags", tags.map(t => t[0]).join(", "))}</h4>${tags.length ? barList(tags, r => r[0], W.length) : `<p class="sub">Winners use no tags.</p>`}
+      ${hts.length ? `<h4>Hashtags ${cbtn("Copy hashtags", hts.map(t => t[0]).join(" "))}</h4><div class="chips">${hts.map(t => `<button class="chip" data-copy="${esc(t[0])}">${esc(t[0])} · ${t[1]}</button>`).join("")}</div>` : ""}
+      ${words.length ? `<h4>Words repeated in winning titles</h4><div class="chips">${words.map(t => `<button class="chip" data-copy="${esc(t[0])}">${esc(t[0])} · ${t[1]}</button>`).join("")}</div>` : ""}
+      <h4>Views per hour, top 10</h4>${barChart(top.slice(0, 10).map(x => Math.round(x.vph)), top.slice(0, 10).map((x, i) => "#" + (i + 1) + " " + x.title.slice(0, 28)))}
+      <h4>Trending videos</h4><div style="display:grid;gap:12px">${top.map(card).join("")}</div>`;
   }catch(e){ out.innerHTML = `<p class="err">${esc(e.message)}</p>`; }
 }
 
