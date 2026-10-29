@@ -758,7 +758,14 @@ async function runTrend(){
       <div class="v">${esc(x.ch)}${x.subs != null ? " · " + short(x.subs) + " subs" : ""} · ${short(x.views)} views · ${Math.round(x.vph)}/hr · ${x.lr.toFixed(1)}% likes · ${mmss(x.secs)}${x.ratio != null ? " · " + x.ratio.toFixed(1) + "× subs" : ""}</div>
       <div class="chips">${x.tags.slice(0, 15).map(t => `<button class="chip" data-copy="${esc(t)}" title="Copy tag">${esc(t)}</button>`).join("")}</div>
       <div class="chips">${cbtn("Copy tags", x.tags.join(", "))}${cbtn("Copy title", x.title)}${cbtn("Copy link", "https://www.youtube.com/watch?v=" + x.id)}${cbtn("Copy all", x.title + "\nhttps://www.youtube.com/watch?v=" + x.id + (x.tags.length ? "\nTags: " + x.tags.join(", ") : ""))}</div></div></div>`;
-    out.innerHTML = `<p class="sub">Sample: ${n} competitor videos from the last ${days} day${days > 1 ? "s" : ""} (your own channels excluded). Winners are the top ${W.length} by views per hour. ${n < 20 ? "Small sample, so treat these as hints." : ""}</p>
+    const brief = ["TREND BRIEF", `Date: ${new Date().toISOString().slice(0, 10)} | Topic searched: ${kw} | Window: last ${days} day(s) | Format filter: ${$("tfmt").value === "short" ? "short videos only" : "any length"} | Sample: ${n} competitor videos, winners = top ${W.length} by views per hour`,
+      "WINNING PATTERNS:", ...tk.map(x => "- " + x),
+      "TOP TAGS (winners): " + (tags.map(t => t[0] + " (" + t[1] + ")").join(", ") || "none"),
+      "HASHTAGS: " + (hts.map(t => t[0]).join(" ") || "none"),
+      "WORDS REPEATED IN WINNING TITLES: " + (words.map(t => t[0]).join(", ") || "none"),
+      "TOP VIDEOS (rank | title | channel | views | views per hour | length | tags):",
+      ...top.slice(0, 10).map((x, i) => `${i + 1} | ${x.title} | ${x.ch} | ${x.views} | ${Math.round(x.vph)} | ${mmss(x.secs)} | ${x.tags.slice(0, 8).join(", ")}`)].join("\n");
+    out.innerHTML = `<p>${cbtn("Copy trend brief for ChatGPT", brief)}</p><p class="sub">Sample: ${n} competitor videos from the last ${days} day${days > 1 ? "s" : ""} (your own channels excluded). Winners are the top ${W.length} by views per hour. ${n < 20 ? "Small sample, so treat these as hints." : ""}</p>
       <h4>What the winners have in common</h4><ul>${tk.map(x => `<li>${esc(x)}</li>`).join("")}</ul><p class="sub">These are patterns in what is getting views now, not YouTube's actual ranking rules.</p>
       <h4>Tags winners use ${cbtn("Copy all tags", tags.map(t => t[0]).join(", "))}</h4>${tags.length ? barList(tags, r => r[0], W.length) : `<p class="sub">Winners use no tags.</p>`}
       ${hts.length ? `<h4>Hashtags ${cbtn("Copy hashtags", hts.map(t => t[0]).join(" "))}</h4><div class="chips">${hts.map(t => `<button class="chip" data-copy="${esc(t[0])}">${esc(t[0])} · ${t[1]}</button>`).join("")}</div>` : ""}
